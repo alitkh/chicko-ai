@@ -2,10 +2,62 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, PersonalityId, ImageGenerationParams } from "../types";
 import { PERSONALITIES } from "../constants";
 
+// --- RATE LIMIT TRACKER SYSTEM ---
+const QUOTA_KEY = 'chiko_quota_tracker';
+const LIMITS = {
+  RPM: 15,   // Requests Per Minute (Free Tier limit estimation)
+  RPD: 1500  // Requests Per Day
+};
+
+export const trackRequest = () => {
+  try {
+    const now = Date.now();
+    const rawData = localStorage.getItem(QUOTA_KEY);
+    let timestamps: number[] = rawData ? JSON.parse(rawData) : [];
+    
+    // Filter timestamps older than 24 hours to keep storage clean
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    timestamps = timestamps.filter(t => t > oneDayAgo);
+    
+    // Add new request
+    timestamps.push(now);
+    localStorage.setItem(QUOTA_KEY, JSON.stringify(timestamps));
+  } catch (e) {
+    console.error("Quota tracking error", e);
+  }
+};
+
+export const getQuotaStats = () => {
+  try {
+    const now = Date.now();
+    const rawData = localStorage.getItem(QUOTA_KEY);
+    const timestamps: number[] = rawData ? JSON.parse(rawData) : [];
+    
+    // Calculate RPM (Last 60 seconds)
+    const oneMinuteAgo = now - 60 * 1000;
+    const requestsLastMinute = timestamps.filter(t => t > oneMinuteAgo).length;
+    
+    // Calculate RPD (Last 24 hours)
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    const requestsLastDay = timestamps.filter(t => t > oneDayAgo).length;
+
+    return {
+      rpmUsed: requestsLastMinute,
+      rpmLimit: LIMITS.RPM,
+      rpmRemaining: Math.max(0, LIMITS.RPM - requestsLastMinute),
+      percentUsed: Math.min(100, (requestsLastMinute / LIMITS.RPM) * 100),
+      isLow: requestsLastMinute >= (LIMITS.RPM - 3) // Warning if less than 3 requests left
+    };
+  } catch (e) {
+    return { rpmUsed: 0, rpmLimit: 15, rpmRemaining: 15, percentUsed: 0, isLow: false };
+  }
+};
+
+// --- END TRACKER SYSTEM ---
+
 // Helper to get AI Client
 const getAIClient = () => {
   // Strictly follow @google/genai guidelines:
-  // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey === '""' || apiKey.length === 0) {
@@ -20,6 +72,9 @@ export const createChatStream = async function* (
   newMessage: string,
   personalityId: PersonalityId
 ) {
+  // Track Usage
+  trackRequest();
+
   const ai = getAIClient();
   const personality = PERSONALITIES[personalityId];
   
@@ -45,6 +100,9 @@ export const createChatStream = async function* (
 };
 
 export const generateImage = async (params: ImageGenerationParams): Promise<string> => {
+  // Track Usage
+  trackRequest();
+
   const ai = getAIClient();
   const { prompt, style, aspectRatio } = params;
   
@@ -79,6 +137,9 @@ export const generateImage = async (params: ImageGenerationParams): Promise<stri
 };
 
 export const editImage = async (base64Image: string, prompt: string): Promise<string> => {
+  // Track Usage
+  trackRequest();
+
   try {
     const ai = getAIClient();
     

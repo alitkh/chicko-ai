@@ -1,30 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Glass } from '../components/ui/Glass';
-import { Sparkles, ArrowRight, Image as ImageIcon, MessageSquare, Camera, UserX, Shirt, Palette, Wand2, Bot } from 'lucide-react';
+import { Sparkles, ArrowRight, Image as ImageIcon, MessageSquare, Camera, UserX, Shirt, Palette, Wand2, Bot, Battery, Zap } from 'lucide-react';
+import { getQuotaStats } from '../services/geminiService';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const hour = new Date().getHours();
-  
-  // Greeting in Indonesian Slang
   const greeting = hour < 11 ? 'Pagi Bro' : hour < 15 ? 'Siang Guys' : hour < 18 ? 'Sore Bray' : 'Malem Sob';
+
+  const [quota, setQuota] = useState(getQuotaStats());
+
+  // Auto-refresh quota display every second to show "cooling down" effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQuota(getQuotaStats());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-6 animate-fade-in pt-8">
       
       {/* App Branding / Logo */}
-      <div className="flex items-center gap-3 animate-slide-up" style={{ animationDelay: '0ms' }}>
-         <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-neon-blue to-neon-purple p-[1px] shadow-glow-blue relative group">
-            <div className="absolute inset-0 bg-white/20 blur-lg rounded-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
-            <div className="w-full h-full bg-[#0a0a0c] rounded-[15px] flex items-center justify-center relative z-10 backdrop-blur-sm">
-               <Bot size={24} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+      <div className="flex items-center justify-between animate-slide-up" style={{ animationDelay: '0ms' }}>
+         <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-neon-blue to-neon-purple p-[1px] shadow-glow-blue relative group">
+                <div className="absolute inset-0 bg-white/20 blur-lg rounded-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="w-full h-full bg-[#0a0a0c] rounded-[15px] flex items-center justify-center relative z-10 backdrop-blur-sm">
+                   <Bot size={24} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                </div>
+            </div>
+            <div>
+                <h2 className="text-xl font-bold tracking-wider text-white leading-none">CHIKO <span className="font-light text-neon-blue">AI</span></h2>
+                <p className="text-[10px] text-gray-400 tracking-widest uppercase mt-0.5">Personal Assistant</p>
             </div>
          </div>
-         <div>
-            <h2 className="text-xl font-bold tracking-wider text-white leading-none">CHIKO <span className="font-light text-neon-blue">AI</span></h2>
-            <p className="text-[10px] text-gray-400 tracking-widest uppercase mt-0.5">Personal Assistant</p>
-         </div>
+
+         {/* QUOTA INDICATOR (Energi Chiko) */}
+         <Glass className="px-3 py-1.5 rounded-xl flex items-center gap-2" intensity="low" variant="flat">
+            <div className={`p-1 rounded-full ${quota.isLow ? 'bg-red-500/20 text-red-400' : 'bg-neon-blue/20 text-neon-blue'}`}>
+               <Zap size={14} fill="currentColor" />
+            </div>
+            <div className="flex flex-col items-end">
+               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Energi</span>
+               <div className="flex items-center gap-1.5">
+                   {/* Progress Bar */}
+                   <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${quota.isLow ? 'bg-red-500' : 'bg-gradient-to-r from-neon-blue to-neon-cyan'}`} 
+                        style={{ width: `${100 - quota.percentUsed}%` }}
+                      />
+                   </div>
+                   {/* <span className="text-xs font-mono text-white">{quota.rpmRemaining}</span> */}
+               </div>
+            </div>
+         </Glass>
       </div>
 
       {/* Header Date & Greeting */}

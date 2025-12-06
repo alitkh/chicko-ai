@@ -53,6 +53,26 @@ export const getQuotaStats = () => {
   }
 };
 
+// --- ERROR HANDLER ---
+const handleGeminiError = (error: any): string => {
+  const msg = (error.message || error.toString()).toLowerCase();
+  
+  if (msg.includes('429') || msg.includes('quota') || msg.includes('exhausted')) {
+    return "Waduh, Energi Chiko habis (Limit Kuota Google). Tunggu beberapa saat atau coba besok lagi ya Bro!";
+  }
+  if (msg.includes('api key') || msg.includes('403')) {
+    return "API Key bermasalah atau hilang. Cek konfigurasi Vercel.";
+  }
+  if (msg.includes('safety') || msg.includes('blocked')) {
+    return "Waduh, kontennya kena filter keamanan AI. Coba ganti kata-kata atau fotonya.";
+  }
+  if (msg.includes('candidate')) {
+    return "AI bingung jawabnya, coba ganti prompt-nya Bro.";
+  }
+  
+  return msg; // Return original message if not matched
+};
+
 // --- END TRACKER SYSTEM ---
 
 // Helper to get AI Client
@@ -75,27 +95,31 @@ export const createChatStream = async function* (
   // Track Usage
   trackRequest();
 
-  const ai = getAIClient();
-  const personality = PERSONALITIES[personalityId];
-  
-  const chat = ai.chats.create({
-    model: 'gemini-2.5-flash',
-    config: {
-      systemInstruction: personality.systemInstruction,
-    },
-    history: history.map(msg => ({
-      role: msg.role,
-      parts: [{ text: msg.content }]
-    }))
-  });
+  try {
+    const ai = getAIClient();
+    const personality = PERSONALITIES[personalityId];
+    
+    const chat = ai.chats.create({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction: personality.systemInstruction,
+      },
+      history: history.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.content }]
+      }))
+    });
 
-  const result = await chat.sendMessageStream({ message: newMessage });
+    const result = await chat.sendMessageStream({ message: newMessage });
 
-  for await (const chunk of result) {
-    const responseChunk = chunk as GenerateContentResponse;
-    if (responseChunk.text) {
-      yield responseChunk.text;
+    for await (const chunk of result) {
+      const responseChunk = chunk as GenerateContentResponse;
+      if (responseChunk.text) {
+        yield responseChunk.text;
+      }
     }
+  } catch (error: any) {
+    throw new Error(handleGeminiError(error));
   }
 };
 
@@ -103,37 +127,41 @@ export const generateImage = async (params: ImageGenerationParams): Promise<stri
   // Track Usage
   trackRequest();
 
-  const ai = getAIClient();
-  const { prompt, style, aspectRatio } = params;
-  
-  const enhancedPrompt = `Generate a ${style} style image. ${prompt}. Aspect ratio ${aspectRatio}. High quality, detailed.`;
+  try {
+    const ai = getAIClient();
+    const { prompt, style, aspectRatio } = params;
+    
+    const enhancedPrompt = `Generate a ${style} style image. ${prompt}. Aspect ratio ${aspectRatio}. High quality, detailed.`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [
-        { text: enhancedPrompt }
-      ]
-    },
-    config: {
-       imageConfig: {
-          aspectRatio: aspectRatio === '1:1' ? '1:1' : 
-                       aspectRatio === '9:16' ? '9:16' : 
-                       aspectRatio === '16:9' ? '16:9' : 
-                       aspectRatio === '4:5' ? '4:5' : '1:1',
-       }
-    }
-  });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          { text: enhancedPrompt }
+        ]
+      },
+      config: {
+         imageConfig: {
+            aspectRatio: aspectRatio === '1:1' ? '1:1' : 
+                         aspectRatio === '9:16' ? '9:16' : 
+                         aspectRatio === '16:9' ? '16:9' : 
+                         aspectRatio === '4:5' ? '4:5' : '1:1',
+         }
+      }
+    });
 
-  if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData && part.inlineData.data) {
-        return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+        }
       }
     }
-  }
 
-  throw new Error("No image data found in response");
+    throw new Error("No image data found in response");
+  } catch (error: any) {
+    throw new Error(handleGeminiError(error));
+  }
 };
 
 export const editImage = async (base64Image: string, prompt: string): Promise<string> => {
@@ -183,6 +211,6 @@ export const editImage = async (base64Image: string, prompt: string): Promise<st
     throw new Error("AI tidak memberikan gambar balik. Coba prompt yang beda.");
   } catch (error: any) {
     console.error("Detail Error Gemini:", error);
-    throw new Error(error.message || "Gagal koneksi ke server AI.");
+    throw new Error(handleGeminiError(error));
   }
 };

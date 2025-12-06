@@ -28,7 +28,8 @@ const ImageGenerator: React.FC = () => {
       setGeneratedImage(base64Image);
     } catch (error: any) {
       console.error("Failed to generate image", error);
-      alert(`Gagal Bikin Gambar Bro!\nError: ${error.message}\n\nCek API Key di settings.`);
+      // Clean error handling handled by service
+      alert(error.message);
     } finally {
       setIsGenerating(false);
     }

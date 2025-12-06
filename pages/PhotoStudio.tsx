@@ -78,7 +78,7 @@ const PhotoStudio: React.FC = () => {
       if (selectedTool !== 'tone') setEditInput('');
     } catch (error: any) {
       console.error("Edit failed:", error);
-      // Tampilkan pesan error spesifik dari service (misal refusal dari AI)
+      // Tampilkan pesan error bersih yang sudah diproses service
       alert(`Gagal Bro: ${error.message}`);
     } finally {
       setIsProcessing(false);

@@ -2,25 +2,14 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, PersonalityId, ImageGenerationParams } from "../types";
 import { PERSONALITIES } from "../constants";
 
-// Helper to get API Key securely
-const getApiKey = (): string => {
-  // 1. Try Environment Variable (Build time)
-  if (process.env.API_KEY) return process.env.API_KEY;
-  
-  // 2. Try LocalStorage (Runtime Manual Override)
-  // Cara pakai: Buka Console Browser -> ketik: localStorage.setItem('gemini_api_key', 'YOUR_KEY')
-  const localKey = localStorage.getItem('gemini_api_key');
-  if (localKey) return localKey;
-
-  return '';
-};
-
+// Helper to get AI Client
 const getAIClient = () => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error("API Key Hilang! Pastikan sudah set API_KEY di .env atau Vercel.");
+  // Strictly follow @google/genai guidelines:
+  // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+  if (!process.env.API_KEY) {
+    throw new Error("API Key Hilang! Pastikan sudah set API_KEY di .env atau Settings Vercel (Perlu Redeploy jika baru diset).");
   }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 export const createChatStream = async function* (

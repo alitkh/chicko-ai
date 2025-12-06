@@ -2,15 +2,33 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, PersonalityId, ImageGenerationParams } from "../types";
 import { PERSONALITIES } from "../constants";
 
-// Initialize the API client
-// Note: In a real production app, ensure API_KEY is set in environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Helper to get API Key securely
+const getApiKey = (): string => {
+  // 1. Try Environment Variable (Build time)
+  if (process.env.API_KEY) return process.env.API_KEY;
+  
+  // 2. Try LocalStorage (Runtime Manual Override)
+  // Cara pakai: Buka Console Browser -> ketik: localStorage.setItem('gemini_api_key', 'YOUR_KEY')
+  const localKey = localStorage.getItem('gemini_api_key');
+  if (localKey) return localKey;
+
+  return '';
+};
+
+const getAIClient = () => {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("API Key Hilang! Pastikan sudah set API_KEY di .env atau Vercel.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const createChatStream = async function* (
   history: Message[],
   newMessage: string,
   personalityId: PersonalityId
 ) {
+  const ai = getAIClient();
   const personality = PERSONALITIES[personalityId];
   
   const chat = ai.chats.create({
@@ -35,6 +53,7 @@ export const createChatStream = async function* (
 };
 
 export const generateImage = async (params: ImageGenerationParams): Promise<string> => {
+  const ai = getAIClient();
   const { prompt, style, aspectRatio } = params;
   
   const enhancedPrompt = `Generate a ${style} style image. ${prompt}. Aspect ratio ${aspectRatio}. High quality, detailed.`;
@@ -69,6 +88,8 @@ export const generateImage = async (params: ImageGenerationParams): Promise<stri
 
 export const editImage = async (base64Image: string, prompt: string): Promise<string> => {
   try {
+    const ai = getAIClient();
+    
     // Clean the base64 string to get raw data
     const base64Data = base64Image.split(',')[1];
     const mimeType = base64Image.substring(base64Image.indexOf(':') + 1, base64Image.indexOf(';'));

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Glass } from '../components/ui/Glass';
-import { Send, Mic, RefreshCw, Copy, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Mic, RefreshCw, Copy, Bot, User, Sparkles, AlertTriangle } from 'lucide-react';
 import { createChatStream } from '../services/geminiService';
 import { Message, PersonalityId } from '../types';
 import { PERSONALITIES } from '../constants';
@@ -13,6 +13,7 @@ const Chat: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPersonality, setSelectedPersonality] = useState<PersonalityId>(PersonalityId.FRIENDLY);
+  const [apiKeyError, setApiKeyError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,6 +22,10 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
+    // Check key on mount
+    if (!process.env.API_KEY && !localStorage.getItem('gemini_api_key')) {
+      setApiKeyError(true);
+    }
   }, [messages, isLoading]);
 
   const handleSend = async () => {
@@ -55,12 +60,19 @@ const Chat: React.FC = () => {
           msg.id === modelMessageId ? { ...msg, content: fullResponse } : msg
         ));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
+      let errorMessage = "Waduh, sinyalnya agak lemot Bro. Coba ulangi lagi.";
+      
+      if (error.message.includes("API Key")) {
+         errorMessage = "API Key Error! Pastikan API Key sudah diset di Vercel atau .env.";
+         setApiKeyError(true);
+      }
+
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        content: "Waduh, sinyalnya agak lemot Bro. Coba ulangi lagi.",
+        content: errorMessage,
         timestamp: Date.now()
       }]);
     } finally {
@@ -77,6 +89,20 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto pt-4 relative">
+      
+      {/* API Key Alert */}
+      {apiKeyError && (
+        <div className="absolute top-16 left-4 right-4 z-50 animate-bounce">
+          <div className="bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-lg border border-white/20 flex items-center gap-3">
+             <AlertTriangle size={20} className="text-yellow-300" />
+             <div className="text-xs">
+               <p className="font-bold">API KEY HILANG!</p>
+               <p>Cek environment variable di Vercel atau file .env.</p>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* Personality Chips - Floating Header */}
       {/* PERFORMANCE FIX: Changed variant to 'flat' to remove backdrop-blur on sticky element */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 bg-gradient-to-b from-[#030305] to-transparent">

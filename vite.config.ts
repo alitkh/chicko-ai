@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
     base: './', 
     define: {
       // Expose API_KEY to the client
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY)
+      // Priority: Vercel/System Env -> .env file -> Empty string
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || '')
     },
     build: {
       outDir: 'dist',

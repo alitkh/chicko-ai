@@ -26,8 +26,9 @@ const ImageGenerator: React.FC = () => {
         aspectRatio: selectedRatio
       });
       setGeneratedImage(base64Image);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate image", error);
+      alert(`Gagal Bikin Gambar Bro!\nError: ${error.message}\n\nCek API Key di settings.`);
     } finally {
       setIsGenerating(false);
     }

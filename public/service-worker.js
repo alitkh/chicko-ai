@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chiko-ai-v1';
+const CACHE_NAME = 'chiko-ai-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force update immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {

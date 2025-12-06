@@ -68,34 +68,47 @@ export const generateImage = async (params: ImageGenerationParams): Promise<stri
 };
 
 export const editImage = async (base64Image: string, prompt: string): Promise<string> => {
-  // Clean the base64 string to get raw data
-  const base64Data = base64Image.split(',')[1];
-  const mimeType = base64Image.substring(base64Image.indexOf(':') + 1, base64Image.indexOf(';'));
+  try {
+    // Clean the base64 string to get raw data
+    const base64Data = base64Image.split(',')[1];
+    const mimeType = base64Image.substring(base64Image.indexOf(':') + 1, base64Image.indexOf(';'));
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [
-        { 
-          text: prompt 
-        },
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: base64Data
+    // CORRECT ORDER: Image First, then Text Prompt
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: base64Data
+            }
+          },
+          { 
+            text: prompt 
           }
-        }
-      ]
-    }
-  });
+        ]
+      }
+    });
 
-  if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData && part.inlineData.data) {
-        return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
+      // 1. Check for Image
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+        }
+      }
+      
+      // 2. Check for Text (Refusal/Error message from AI)
+      const textPart = response.candidates[0].content.parts.find(p => p.text);
+      if (textPart && textPart.text) {
+        throw new Error(textPart.text); // Throw the AI's explanation
       }
     }
-  }
 
-  throw new Error("Gagal mengedit gambar. Coba lagi Bro.");
+    throw new Error("AI tidak memberikan gambar balik. Coba prompt yang beda.");
+  } catch (error: any) {
+    console.error("Detail Error Gemini:", error);
+    throw new Error(error.message || "Gagal koneksi ke server AI.");
+  }
 };

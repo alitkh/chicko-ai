@@ -76,9 +76,10 @@ const PhotoStudio: React.FC = () => {
       setSelectedImage(newImage);
       // Optional: Clear input after success
       if (selectedTool !== 'tone') setEditInput('');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Edit failed:", error);
-      alert("Waduh, gagal ngoprek nih. Coba lagi ya!");
+      // Tampilkan pesan error spesifik dari service (misal refusal dari AI)
+      alert(`Gagal Bro: ${error.message}`);
     } finally {
       setIsProcessing(false);
     }

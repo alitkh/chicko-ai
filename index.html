@@ -3,8 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#030305" />
+    <meta name="description" content="Chiko AI - Your futuristic personal assistant" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="https://api.dicebear.com/9.x/bottts/png?seed=ChikoAI&backgroundColor=030305">
+
     <title>Chiko AI</title>
-    <!-- Tailwind CDN is used here for simplicity. For best production performance, install tailwindcss via npm. -->
+    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -73,6 +80,7 @@
         color: #ffffff;
         overflow-x: hidden;
         -webkit-tap-highlight-color: transparent;
+        scroll-behavior: smooth;
       }
       
       /* Optimized Noise: Static Base64 image instead of Heavy SVG Filter */
@@ -103,12 +111,28 @@
         will-change: transform;
       }
     </style>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Use relative path to support subdirectories and avoid origin issues
+          navigator.serviceWorker.register('./serviceWorker.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
 <script type="importmap">
 {
   "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",

@@ -42,7 +42,7 @@ const Dashboard: React.FC = () => {
           <img 
             src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
             alt="Profile" 
-            className="w-full h-full rounded-full bg-glass-100"
+            className="w-full h-full rounded-full bg-white/5"
           />
         </div>
       </header>
@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
         {/* Chat Action */}
         <div 
             onClick={() => navigate('/chat')}
-            className="group relative h-40 rounded-[32px] overflow-hidden cursor-pointer animate-slide-up transition-transform duration-300 hover:scale-[1.02]" 
+            className="group relative h-40 rounded-[32px] overflow-hidden cursor-pointer animate-slide-up transition-transform duration-300 hover:scale-[1.02] bg-[#1a1f3c]" 
             style={{ animationDelay: '300ms' }}
         >
             <div className="absolute inset-0 bg-gradient-to-br from-[#1a1f3c] to-[#0f111a] z-0" />
@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
             
             <div className="relative z-20 p-6 h-full flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                    <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
+                    <div className="bg-white/10 p-3 rounded-2xl border border-white/10">
                         <MessageSquare className="text-neon-blue" size={24} />
                     </div>
                     <ArrowRight className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
         {/* Create Action */}
         <div 
             onClick={() => navigate('/image')}
-            className="group relative h-40 rounded-[32px] overflow-hidden cursor-pointer animate-slide-up transition-transform duration-300 hover:scale-[1.02]" 
+            className="group relative h-40 rounded-[32px] overflow-hidden cursor-pointer animate-slide-up transition-transform duration-300 hover:scale-[1.02] bg-[#2d1b36]" 
             style={{ animationDelay: '400ms' }}
         >
             <div className="absolute inset-0 bg-gradient-to-br from-[#2d1b36] to-[#120b14] z-0" />
@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
 
             <div className="relative z-20 p-6 h-full flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                    <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
+                    <div className="bg-white/10 p-3 rounded-2xl border border-white/10">
                         <ImageIcon className="text-neon-pink" size={24} />
                     </div>
                     <ArrowRight className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
@@ -117,6 +117,7 @@ const Dashboard: React.FC = () => {
             <Glass 
               onClick={() => navigate('/photo-studio?tool=tone')}
               interactive 
+              variant="flat"
               className="rounded-[24px] p-4 flex flex-col gap-3 relative overflow-hidden group" 
               intensity="medium"
             >
@@ -134,6 +135,7 @@ const Dashboard: React.FC = () => {
             <Glass 
                onClick={() => navigate('/photo-studio?tool=remove')}
                interactive 
+               variant="flat"
                className="rounded-[24px] p-4 flex flex-col gap-3 relative overflow-hidden group" 
                intensity="medium"
             >
@@ -151,6 +153,7 @@ const Dashboard: React.FC = () => {
             <Glass 
                onClick={() => navigate('/photo-studio?tool=outfit')}
                interactive 
+               variant="flat"
                className="rounded-[24px] p-4 flex flex-col gap-3 relative overflow-hidden group" 
                intensity="medium"
             >
@@ -168,6 +171,7 @@ const Dashboard: React.FC = () => {
             <Glass 
                onClick={() => navigate('/photo-studio?tool=enhance')}
                interactive 
+               variant="flat"
                className="rounded-[24px] p-4 flex flex-col gap-3 relative overflow-hidden group" 
                intensity="medium"
             >

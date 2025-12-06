@@ -78,8 +78,9 @@ const Chat: React.FC = () => {
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto pt-4 relative">
       {/* Personality Chips - Floating Header */}
+      {/* PERFORMANCE FIX: Changed variant to 'flat' to remove backdrop-blur on sticky element */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 bg-gradient-to-b from-[#030305] to-transparent">
-        <Glass className="rounded-full p-1.5 flex justify-between items-center overflow-x-auto scrollbar-hide gap-1 border-white/5" intensity="high">
+        <Glass className="rounded-full p-1.5 flex justify-between items-center overflow-x-auto scrollbar-hide gap-1 border-white/5" intensity="high" variant="flat">
           {Object.values(PERSONALITIES).map((p) => (
             <button
               key={p.id}
@@ -105,17 +106,18 @@ const Chat: React.FC = () => {
             className={`flex gap-3 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
              {msg.role === 'model' && (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-glass-200 border border-white/10 mt-1 shadow-glow-purple">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5 mt-1">
                      <Sparkles size={14} className="text-neon-purple" />
                 </div>
              )}
             
-            <div className={`relative max-w-[85%] rounded-[24px] px-5 py-3.5 shadow-md ${
+            {/* Optimized Bubbles: No backdrop-blur for content to ensure smooth scrolling */}
+            <div className={`relative max-w-[85%] rounded-[24px] px-5 py-3.5 shadow-sm border border-white/5 ${
               msg.role === 'user' 
                 ? 'bg-gradient-to-br from-neon-blue to-[#0077b6] text-white rounded-tr-sm' 
-                : 'bg-glass-200 border border-white/5 text-gray-100 rounded-tl-sm backdrop-blur-2xl'
+                : 'bg-[#1a1f2e] text-gray-100 rounded-tl-sm'
             }`}>
-              <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:backdrop-blur-md prose-pre:border prose-pre:border-white/10 prose-pre:rounded-xl">
+              <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:rounded-xl">
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
             </div>
@@ -124,10 +126,10 @@ const Chat: React.FC = () => {
 
         {isLoading && (
             <div className="flex gap-3 animate-fade-in">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-glass-200 border border-white/10 shadow-glow-purple">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5">
                      <Sparkles size={14} className="text-neon-purple" />
                 </div>
-                <div className="bg-glass-200 border border-white/5 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 backdrop-blur-2xl">
+                <div className="bg-[#1a1f2e] border border-white/5 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -139,7 +141,7 @@ const Chat: React.FC = () => {
 
       {/* Input Area - Floating Dock */}
       <div className="absolute bottom-24 left-0 right-0 px-4 z-20">
-        <Glass className="rounded-[32px] p-2 flex items-end gap-2 shadow-2xl shadow-black/50 ring-1 ring-white/10" intensity="ultra" border={false}>
+        <Glass className="rounded-[32px] p-2 flex items-end gap-2 shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#0a0a0c]" intensity="ultra" border={false} variant="flat">
           <button className="p-3 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10 active:scale-95">
             <Mic size={22} />
           </button>

@@ -6,10 +6,13 @@ import { PERSONALITIES } from "../constants";
 const getAIClient = () => {
   // Strictly follow @google/genai guidelines:
   // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
-  if (!process.env.API_KEY) {
-    throw new Error("API Key Hilang! Pastikan sudah set API_KEY di .env atau Settings Vercel (Perlu Redeploy jika baru diset).");
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey === '""' || apiKey.length === 0) {
+     console.error("API Key check failed. Value:", apiKey);
+     throw new Error("API Key Hilang! Pastikan sudah set API_KEY di .env atau Settings Vercel (Perlu Redeploy jika baru diset).");
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey: apiKey });
 };
 
 export const createChatStream = async function* (

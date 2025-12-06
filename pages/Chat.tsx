@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Glass } from '../components/ui/Glass';
-import { Send, Mic, RefreshCw, Copy, Bot, User, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, Mic, Sparkles, AlertTriangle } from 'lucide-react';
 import { createChatStream } from '../services/geminiService';
 import { Message, PersonalityId } from '../types';
 import { PERSONALITIES } from '../constants';
@@ -22,8 +22,10 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-    // Check key on mount
-    if (!process.env.API_KEY && !localStorage.getItem('gemini_api_key')) {
+    // Check key on mount using the service helper logic (indirectly via trying to access it or just basic check)
+    // Note: process.env.API_KEY is replaced by Vite at build time.
+    if (!process.env.API_KEY) {
+      // If it's empty string or undefined
       setApiKeyError(true);
     }
   }, [messages, isLoading]);
@@ -64,7 +66,7 @@ const Chat: React.FC = () => {
       console.error("Chat error:", error);
       let errorMessage = "Waduh, sinyalnya agak lemot Bro. Coba ulangi lagi.";
       
-      if (error.message.includes("API Key")) {
+      if (error.message.includes("API Key") || error.message.includes("403") || error.message.includes("key")) {
          errorMessage = "API Key Error! Pastikan API Key sudah diset di Vercel atau .env.";
          setApiKeyError(true);
       }
@@ -88,13 +90,14 @@ const Chat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto pt-4 relative">
+    // Use 100dvh for better mobile browser support (accounts for address bar)
+    <div className="flex flex-col h-[100dvh] w-full max-w-2xl mx-auto relative overflow-hidden bg-[#030305]">
       
-      {/* API Key Alert */}
+      {/* API Key Alert - Fixed position ensures visibility */}
       {apiKeyError && (
-        <div className="absolute top-16 left-4 right-4 z-50 animate-bounce">
-          <div className="bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-lg border border-white/20 flex items-center gap-3">
-             <AlertTriangle size={20} className="text-yellow-300" />
+        <div className="fixed top-24 left-4 right-4 z-50 animate-bounce">
+          <div className="bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-lg border border-white/20 flex items-center gap-3 backdrop-blur-md">
+             <AlertTriangle size={20} className="text-yellow-300 shrink-0" />
              <div className="text-xs">
                <p className="font-bold">API KEY HILANG!</p>
                <p>Cek environment variable di Vercel atau file .env.</p>
@@ -103,47 +106,47 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Personality Chips - Floating Header */}
-      {/* PERFORMANCE FIX: Changed variant to 'flat' to remove backdrop-blur on sticky element */}
-      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 bg-gradient-to-b from-[#030305] to-transparent">
-        <Glass className="rounded-full p-1.5 flex justify-between items-center overflow-x-auto scrollbar-hide gap-1 border-white/5" intensity="high" variant="flat">
-          {Object.values(PERSONALITIES).map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPersonality(p.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 ${
-                selectedPersonality === p.id 
-                  ? 'bg-white text-black shadow-lg shadow-white/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span>{p.icon}</span>
-              {p.name}
-            </button>
-          ))}
-        </Glass>
+      {/* Personality Chips - Fixed Header with Gradient Background */}
+      <div className="fixed top-0 left-0 right-0 z-30 pt-4 pb-6 bg-gradient-to-b from-[#030305] via-[#030305]/95 to-transparent">
+        <div className="max-w-2xl mx-auto px-4">
+          <Glass className="rounded-full p-1.5 flex justify-between items-center overflow-x-auto scrollbar-hide gap-1 border-white/5" intensity="medium" variant="flat">
+            {Object.values(PERSONALITIES).map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPersonality(p.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 ${
+                  selectedPersonality === p.id 
+                    ? 'bg-white text-black shadow-lg shadow-white/10 scale-105' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span>{p.icon}</span>
+                {p.name}
+              </button>
+            ))}
+          </Glass>
+        </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-24 pb-32 space-y-6">
+      {/* Messages Area - Scrollable with padding for header/footer */}
+      <div className="flex-1 overflow-y-auto px-4 pt-28 pb-40 space-y-6 scrollbar-hide">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex gap-3 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
              {msg.role === 'model' && (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5 mt-1">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5 mt-1 shadow-glow-purple/20">
                      <Sparkles size={14} className="text-neon-purple" />
                 </div>
              )}
             
-            {/* Optimized Bubbles: No backdrop-blur for content to ensure smooth scrolling */}
             <div className={`relative max-w-[85%] rounded-[24px] px-5 py-3.5 shadow-sm border border-white/5 ${
               msg.role === 'user' 
-                ? 'bg-gradient-to-br from-neon-blue to-[#0077b6] text-white rounded-tr-sm' 
+                ? 'bg-gradient-to-br from-neon-blue to-[#0077b6] text-white rounded-tr-sm shadow-glow-blue/20' 
                 : 'bg-[#1a1f2e] text-gray-100 rounded-tl-sm'
             }`}>
-              <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:rounded-xl">
+              <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:rounded-xl break-words">
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
             </div>
@@ -165,33 +168,35 @@ const Chat: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Floating Dock */}
-      <div className="absolute bottom-24 left-0 right-0 px-4 z-20">
-        <Glass className="rounded-[32px] p-2 flex items-end gap-2 shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#0a0a0c]" intensity="ultra" border={false} variant="flat">
-          <button className="p-3 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10 active:scale-95">
-            <Mic size={22} />
-          </button>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ketik aja bro, gausah sungkan..."
-            className="flex-1 bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 resize-none py-3.5 max-h-32 scrollbar-hide text-base"
-            rows={1}
-            style={{ height: '52px' }}
-          />
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${
-              input.trim() 
-                ? 'bg-white text-black hover:scale-105 shadow-glow-blue' 
-                : 'bg-white/5 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            <Send size={20} fill={input.trim() ? "currentColor" : "none"} />
-          </button>
-        </Glass>
+      {/* Input Area - Fixed Bottom Dock above Navbar */}
+      <div className="fixed bottom-[88px] left-0 right-0 z-30 px-4 bg-gradient-to-t from-[#030305] via-[#030305]/90 to-transparent pt-6 pb-1 pointer-events-none">
+        <div className="max-w-2xl mx-auto pointer-events-auto">
+          <Glass className="rounded-[32px] p-2 flex items-end gap-2 shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#0a0a0c]" intensity="ultra" border={false} variant="flat">
+            <button className="p-3 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10 active:scale-95 touch-manipulation">
+              <Mic size={22} />
+            </button>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ketik aja bro..."
+              className="flex-1 bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 resize-none py-3.5 max-h-32 scrollbar-hide text-base"
+              rows={1}
+              style={{ height: '52px' }}
+            />
+            <button 
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center touch-manipulation ${
+                input.trim() 
+                  ? 'bg-white text-black hover:scale-105 shadow-glow-blue' 
+                  : 'bg-white/5 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Send size={20} fill={input.trim() ? "currentColor" : "none"} />
+            </button>
+          </Glass>
+        </div>
       </div>
     </div>
   );

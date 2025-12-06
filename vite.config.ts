@@ -7,7 +7,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
   
   // Prioritize Vercel/System Env -> Local .env -> Fallback
+  // Ensure we get a string, even if empty, to avoid build crashes
   const apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
+
+  if (!apiKey && mode === 'production') {
+    console.warn("WARNING: API_KEY is missing in production build!");
+  }
 
   return {
     plugins: [react()],

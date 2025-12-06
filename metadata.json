@@ -1,0 +1,7 @@
+{
+  "name": "Chiko AI",
+  "description": "A premium, futuristic AI assistant for chat and image generation powered by Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

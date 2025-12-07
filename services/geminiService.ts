@@ -58,7 +58,7 @@ const handleGeminiError = (error: any): string => {
   const msg = (error.message || error.toString()).toLowerCase();
   
   if (msg.includes('429') || msg.includes('quota') || msg.includes('exhausted')) {
-    return "Waduh, Energi Chiko habis (Limit Kuota Google). Tunggu beberapa saat atau coba besok lagi ya Bro!";
+    return "Sabar kontol";
   }
   if (msg.includes('api key') || msg.includes('403')) {
     return "API Key bermasalah atau hilang. Cek konfigurasi Vercel.";

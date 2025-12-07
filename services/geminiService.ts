@@ -77,7 +77,7 @@ const handleGeminiError = (error: any): string => {
 
 // Helper to get AI Client
 const getAIClient = () => {
-  // Strictly follow @google/genai guidelines:
+  // Strictly follow @google/genai guidelines, but we ensure vite.config.ts has injected this value.
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey === '""' || apiKey.length === 0) {

@@ -7,8 +7,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
   
   // Prioritize Vercel/System Env -> Local .env -> Fallback
-  // Ensure we get a string, even if empty, to avoid build crashes
-  const apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
+  let apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
+
+  // Clean the API key if it's wrapped in quotes (common issue in Vercel/env files)
+  if (apiKey.startsWith('"') && apiKey.endsWith('"')) {
+    apiKey = apiKey.slice(1, -1);
+  }
 
   if (!apiKey && mode === 'production') {
     console.warn("WARNING: API_KEY is missing in production build!");
@@ -20,7 +24,7 @@ export default defineConfig(({ mode }) => {
     define: {
       // Force replace process.env.API_KEY with the actual string value during build
       'process.env.API_KEY': JSON.stringify(apiKey),
-      // Also provide standard Vite access
+      // Also provide standard Vite access as backup
       'import.meta.env.VITE_API_KEY': JSON.stringify(apiKey)
     },
     build: {

@@ -37,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Floating Bottom Navigation Island */}
-      <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center pointer-events-none">
+      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
         <div className="pointer-events-auto bg-glass-200 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-8 shadow-glass shadow-black/40 gpu-accelerated">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

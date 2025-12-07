@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Glass } from '../components/ui/Glass';
-import { Sparkles, ArrowRight, Image as ImageIcon, MessageSquare, Camera, UserX, Shirt, Palette, Wand2, Bot, Battery, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Image as ImageIcon, MessageSquare, Camera, UserX, Shirt, Palette, Wand2, Bot, Battery, Zap, MessageCircle, ChevronRight } from 'lucide-react';
 import { getQuotaStats } from '../services/geminiService';
 
 const Dashboard: React.FC = () => {
@@ -18,6 +18,12 @@ const Dashboard: React.FC = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleWhatsAppClick = () => {
+    const phone = "62895617544395";
+    const text = encodeURIComponent("Halo Chiko Dev, gue mau kasih feedback/saran buat aplikasinya nih: \n\n");
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  };
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-6 animate-fade-in pt-8">
@@ -135,7 +141,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Photography Features Section */}
-      <div className="animate-slide-up pb-20" style={{ animationDelay: '500ms' }}>
+      <div className="animate-slide-up" style={{ animationDelay: '500ms' }}>
          <div className="flex justify-between items-center mb-4 px-1">
             <h3 className="text-lg font-semibold tracking-wide flex items-center gap-2">
               <Camera size={18} className="text-neon-cyan" />
@@ -217,6 +223,34 @@ const Dashboard: React.FC = () => {
             </Glass>
          </div>
       </div>
+
+      {/* FEEDBACK SECTION */}
+      <div className="animate-slide-up pb-20" style={{ animationDelay: '600ms' }}>
+         <Glass 
+            onClick={handleWhatsAppClick}
+            interactive 
+            variant="flat"
+            className="rounded-[24px] p-5 flex items-center justify-between group relative overflow-hidden border border-green-500/20" 
+            intensity="low"
+         >
+            {/* Background Hover Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="flex items-center gap-4 relative z-10">
+               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-transparent flex items-center justify-center text-green-400 border border-green-500/30 shadow-lg shadow-green-900/20">
+                  <MessageCircle size={24} />
+               </div>
+               <div>
+                   <h3 className="font-bold text-white text-lg leading-tight">Kirimi Masukan</h3>
+                   <p className="text-xs text-gray-400 mt-1">Lapor bug / request fitur ke Dev</p>
+               </div>
+            </div>
+            <div className="relative z-10 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-500 group-hover:text-black transition-all">
+               <ChevronRight size={18} />
+            </div>
+         </Glass>
+      </div>
+
     </div>
   );
 };

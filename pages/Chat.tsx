@@ -17,15 +17,17 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // FIX: Only auto-scroll if there is conversation history (more than just the greeting)
+    // This prevents the view from jumping to the bottom empty space on initial load
+    if (messages.length > 1) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-    // Check key on mount using the service helper logic (indirectly via trying to access it or just basic check)
-    // Note: process.env.API_KEY is replaced by Vite at build time.
+    // Basic check if API key might be missing (Vite handles replacement)
     if (!process.env.API_KEY) {
-      // If it's empty string or undefined
       setApiKeyError(true);
     }
   }, [messages, isLoading]);
@@ -69,6 +71,8 @@ const Chat: React.FC = () => {
       if (error.message.includes("API Key") || error.message.includes("403") || error.message.includes("key")) {
          errorMessage = "API Key Error! Pastikan API Key sudah diset di Vercel atau .env.";
          setApiKeyError(true);
+      } else {
+         errorMessage = error.message; // Use friendly message from service
       }
 
       setMessages(prev => [...prev, {
@@ -90,12 +94,13 @@ const Chat: React.FC = () => {
   };
 
   return (
-    // Use 100dvh for better mobile browser support (accounts for address bar)
-    <div className="flex flex-col h-[100dvh] w-full max-w-2xl mx-auto relative overflow-hidden bg-[#030305]">
+    // FIX: Use fixed inset-0 z-40 to take over the screen above the layout background but below nav (z-50)
+    // This isolates the chat scrolling from the main layout body scrolling
+    <div className="fixed inset-0 z-40 bg-[#030305] flex flex-col">
       
-      {/* API Key Alert - Fixed position ensures visibility */}
+      {/* API Key Alert */}
       {apiKeyError && (
-        <div className="fixed top-24 left-4 right-4 z-50 animate-bounce">
+        <div className="absolute top-24 left-4 right-4 z-[60] animate-bounce pointer-events-none">
           <div className="bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-lg border border-white/20 flex items-center gap-3 backdrop-blur-md">
              <AlertTriangle size={20} className="text-yellow-300 shrink-0" />
              <div className="text-xs">
@@ -106,9 +111,10 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Personality Chips - Fixed Header with Gradient Background */}
-      <div className="fixed top-0 left-0 right-0 z-30 pt-4 pb-6 bg-gradient-to-b from-[#030305] via-[#030305]/95 to-transparent">
-        <div className="max-w-2xl mx-auto px-4">
+      {/* Personality Header */}
+      {/* Use flex-none so it doesn't shrink, with gradient background for visibility */}
+      <div className="flex-none pt-4 pb-4 px-4 bg-gradient-to-b from-[#030305] via-[#030305] to-transparent z-50">
+        <div className="max-w-2xl mx-auto">
           <Glass className="rounded-full p-1.5 flex justify-between items-center overflow-x-auto scrollbar-hide gap-1 border-white/5" intensity="medium" variant="flat">
             {Object.values(PERSONALITIES).map((p) => (
               <button
@@ -128,48 +134,52 @@ const Chat: React.FC = () => {
         </div>
       </div>
 
-      {/* Messages Area - Scrollable with padding for header/footer */}
-      <div className="flex-1 overflow-y-auto px-4 pt-28 pb-40 space-y-6 scrollbar-hide">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-3 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-          >
-             {msg.role === 'model' && (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5 mt-1 shadow-glow-purple/20">
-                     <Sparkles size={14} className="text-neon-purple" />
+      {/* Messages Area */}
+      {/* flex-1 allows it to take remaining height. padding-bottom ensures content isn't hidden behind input/nav */}
+      <div className="flex-1 overflow-y-auto px-4 pb-36 scrollbar-hide">
+        <div className="max-w-2xl mx-auto space-y-6 pt-2">
+            {messages.map((msg) => (
+            <div
+                key={msg.id}
+                className={`flex gap-3 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            >
+                {msg.role === 'model' && (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5 mt-1 shadow-glow-purple/20">
+                        <Sparkles size={14} className="text-neon-purple" />
+                    </div>
+                )}
+                
+                <div className={`relative max-w-[85%] rounded-[24px] px-5 py-3.5 shadow-sm border border-white/5 ${
+                msg.role === 'user' 
+                    ? 'bg-gradient-to-br from-neon-blue to-[#0077b6] text-white rounded-tr-sm shadow-glow-blue/20' 
+                    : 'bg-[#1a1f2e] text-gray-100 rounded-tl-sm'
+                }`}>
+                <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:rounded-xl break-words">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
-             )}
-            
-            <div className={`relative max-w-[85%] rounded-[24px] px-5 py-3.5 shadow-sm border border-white/5 ${
-              msg.role === 'user' 
-                ? 'bg-gradient-to-br from-neon-blue to-[#0077b6] text-white rounded-tr-sm shadow-glow-blue/20' 
-                : 'bg-[#1a1f2e] text-gray-100 rounded-tl-sm'
-            }`}>
-              <div className="text-[15px] leading-relaxed prose prose-invert prose-p:my-1 prose-pre:bg-black/30 prose-pre:rounded-xl break-words">
-                <ReactMarkdown>{msg.content}</ReactMarkdown>
-              </div>
+                </div>
             </div>
-          </div>
-        ))}
+            ))}
 
-        {isLoading && (
-            <div className="flex gap-3 animate-fade-in">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5">
-                     <Sparkles size={14} className="text-neon-purple" />
+            {isLoading && (
+                <div className="flex gap-3 animate-fade-in">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1e2336] border border-white/5">
+                        <Sparkles size={14} className="text-neon-purple" />
+                    </div>
+                    <div className="bg-[#1a1f2e] border border-white/5 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
                 </div>
-                <div className="bg-[#1a1f2e] border border-white/5 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-            </div>
-        )}
-        <div ref={messagesEndRef} />
+            )}
+            <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      {/* Input Area - Fixed Bottom Dock above Navbar */}
-      <div className="fixed bottom-[88px] left-0 right-0 z-30 px-4 bg-gradient-to-t from-[#030305] via-[#030305]/90 to-transparent pt-6 pb-1 pointer-events-none">
+      {/* Input Area - Fixed relative to container, positioned above Nav Bar */}
+      {/* bottom-[88px] accounts for nav bar (approx 60-70px) + spacing */}
+      <div className="fixed bottom-[88px] left-0 right-0 z-50 px-4 bg-gradient-to-t from-[#030305] via-[#030305]/95 to-transparent pt-6 pb-2 pointer-events-none">
         <div className="max-w-2xl mx-auto pointer-events-auto">
           <Glass className="rounded-[32px] p-2 flex items-end gap-2 shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#0a0a0c]" intensity="ultra" border={false} variant="flat">
             <button className="p-3 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10 active:scale-95 touch-manipulation">
@@ -180,9 +190,8 @@ const Chat: React.FC = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ketik aja bro..."
-              className="flex-1 bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 resize-none py-3.5 max-h-32 scrollbar-hide text-base"
+              className="flex-1 bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 resize-none py-3.5 max-h-32 scrollbar-hide text-base min-h-[52px]"
               rows={1}
-              style={{ height: '52px' }}
             />
             <button 
               onClick={handleSend}

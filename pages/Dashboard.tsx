@@ -242,7 +242,7 @@ const Dashboard: React.FC = () => {
                </div>
                <div>
                    <h3 className="font-bold text-white text-lg leading-tight">Kirimi Masukan</h3>
-                   <p className="text-xs text-gray-400 mt-1">Lapor bug / request fitur ke Dev</p>
+                   <p className="text-xs text-gray-400 mt-1">Lapor bug / request fitur ke Alit ganteng</p>
                </div>
             </div>
             <div className="relative z-10 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-500 group-hover:text-black transition-all">
